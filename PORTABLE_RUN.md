@@ -18,3 +18,9 @@ must be recorded as deviations when comparing to the historical paper. An active
 state argument selects receptor-state templates, not a ligand conformation.
 
 Lightweight checks: `python -m unittest discover -s tests -v`.
+
+For headless Kalign 3.2.2 jobs, set `AF2_KALIGN_STDIN=1`. That release also
+reads inherited nonterminal stdin when `-i` is present; an empty stdin can cause
+all template realignments to fail. The opt-in sends the same FASTA through one
+stdin stream and omits the duplicate file input. No alignment parameters or
+software versions change. Record this compatibility setting with the run.

@@ -77,19 +77,26 @@ class Kalign:
       with open(input_fasta_path, 'w') as f:
         f.write(_to_a3m(sequences))
 
+      # Kalign 3.2.2 also reads nonterminal stdin, even with -i. An empty
+      # inherited stdin then looks like a second, invalid alignment input.
+      use_stdin = os.environ.get('AF2_KALIGN_STDIN') == '1'
       cmd = [
           self.binary_path,
-          '-i', input_fasta_path,
           '-o', output_a3m_path,
           '-format', 'fasta',
       ]
 
+      if not use_stdin:
+        cmd.extend(['-i', input_fasta_path])
+
       logging.info('Launching subprocess "%s"', ' '.join(cmd))
       process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
+                                 stderr=subprocess.PIPE,
+                                 stdin=subprocess.PIPE if use_stdin else None)
 
       with utils.timing('Kalign query'):
-        stdout, stderr = process.communicate()
+        stdout, stderr = process.communicate(
+            input=_to_a3m(sequences).encode('utf-8') if use_stdin else None)
         retcode = process.wait()
         logging.info('Kalign stdout:\n%s\n\nstderr:\n%s\n',
                      stdout.decode('utf-8'), stderr.decode('utf-8'))
