@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import json
 
 jackhmmer_binary_path = "/home/huhlim/apps/hmmer/current/bin/jackhmmer"
 hhblits_binary_path = "/home/huhlim/apps/hhsuite/current/bin/hhblits"
@@ -42,8 +43,8 @@ obsolete_pdbs_path = os.path.join(data_dir, 'pdb_mmcif', 'obsolete.dat')
 max_template_date = '2099-12-31'
 
 os.environ['NVIDIA_VISIBLE_DEVICES'] = os.getenv("CUDA_VISIBLE_DEVICES", "")
-os.environ['TF_FORCE_UNIFIED_MEMORY'] = '1'
-os.environ['XLA_PYTHON_CLIENT_MEM_FRACTION'] = '4.0'
+os.environ.setdefault('TF_FORCE_UNIFIED_MEMORY', '1')
+os.environ.setdefault('XLA_PYTHON_CLIENT_MEM_FRACTION', '4.0')
 if os.getenv("CUDA_VISIBLE_DEVICES", "") == "":
     os.environ['JAX_PLATFORM_NAME'] = 'cpu'
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
@@ -67,3 +68,17 @@ gpcr100_inactive_db_path = "/feig/s1/huhlim/work/af/multi_state/GPCRdb/GPCR100.I
 
 mmcif_active_db_path = "/feig/s1/huhlim/work/af/multi_state/GPCRdb/cif.Active"
 mmcif_inactive_db_path = "/feig/s1/huhlim/work/af/multi_state/GPCRdb/cif.Inactive"
+
+# Optional deployment configuration, kept outside this source checkout.
+# Read JSON as data; never execute a config file or silently accept misspelled keys.
+if os.environ.get('AF2_CONFIG'):
+    with open(os.environ['AF2_CONFIG']) as config_file:
+        overrides = json.load(config_file)
+    allowed_keys = {name for name in globals()
+                    if name.endswith('_path') or name in {'data_dir', 'template_mmcif_dir', 'max_template_date'}}
+    if not isinstance(overrides, dict) or set(overrides) - allowed_keys:
+        raise ValueError('AF2_CONFIG contains unknown configuration keys')
+    for name, value in overrides.items():
+        if not isinstance(value, str) or not value:
+            raise ValueError('AF2_CONFIG values must be nonempty strings: ' + name)
+        globals()[name] = value

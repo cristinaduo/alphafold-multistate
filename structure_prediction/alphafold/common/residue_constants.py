@@ -404,7 +404,7 @@ def load_stereo_chemical_props() -> Tuple[Mapping[str, List[Bond]],
     residue_virtual_bonds: Dict that maps resname -> list of Bond tuples.
     residue_bond_angles: Dict that maps resname -> list of BondAngle tuples.
   """
-  stereo_chemical_props_path = (
+  stereo_chemical_props_path = os.environ.get('AF2_STEREO_CHEMICAL_PROPS',
           pathlib.Path(__file__).parent.resolve() / 'stereo_chemical_props.txt')
   with open(stereo_chemical_props_path, 'rt') as f:
     stereo_chemical_props = f.read()
